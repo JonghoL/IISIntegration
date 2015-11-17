@@ -83,7 +83,9 @@ namespace Microsoft.AspNet.IISPlatformHandler
             if (xForwardedForHeaderValue != null && xForwardedForHeaderValue.Length > 0)
             {
                 IPAddress ipFromHeader;
-                if (IPAddress.TryParse(xForwardedForHeaderValue[0], out ipFromHeader))
+                string ipString = xForwardedForHeaderValue[0];
+                int portStart = ipString.LastIndexOf(':');
+                if (IPAddress.TryParse(ipString.Substring(0, portStart), out ipFromHeader))
                 {
                     var remoteIPString = httpContext.Connection.RemoteIpAddress?.ToString();
                     if (!string.IsNullOrEmpty(remoteIPString))
@@ -91,6 +93,11 @@ namespace Microsoft.AspNet.IISPlatformHandler
                         httpContext.Request.Headers[XOriginalIPName] = remoteIPString;
                     }
                     httpContext.Connection.RemoteIpAddress = ipFromHeader;
+                    int remotePortFromHeader;
+                    if (int.TryParse(ipString.Substring(portStart+1, ipString.Length - (portStart+1)), out remotePortFromHeader))
+                    {
+                        httpContext.Connection.RemotePort = remotePortFromHeader;
+                    }
                 }
             }
         }
